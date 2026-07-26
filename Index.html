@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gold Alpha</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: #0f172a;
+      color: white;
+      font-family: Arial;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+    h1 {
+      color: gold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Gold Alpha Tool</h1>
+
+<div class="card">
+  <h2 id="gold">Gold: Loading...</h2>
+  <p id="dxy">DXY Change: ...</p>
+  <p id="yield">10Y Yield: ...</p>
+</div>
+
+<div class="card">
+  <h3 id="bias">Macro Bias: ...</h3>
+  <h2 id="signal">Signal: ...</h2>
+</div>
+
+<script>
+async function fetchData() {
+  try {
+    // GOLD
+    const goldRes = await fetch(
+      "https://api.twelvedata.com/price?symbol=XAU/USD&apikey=76d2c1e65a7a460e9c8bf9edb5c3ddd0"
+    );
+    const goldData = await goldRes.json();
+
+    // DXY
+    const dxyRes = await fetch(
+      "https://api.twelvedata.com/quote?symbol=DXY&apikey=76d2c1e65a7a460e9c8bf9edb5c3ddd0"
+    );
+    const dxyData = await dxyRes.json();
+
+    // 10Y Treasury Yield
+    const yieldRes = await fetch(
+      "https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&api_key=ffb299f96e275642d1519cbad0b08ff7&file_type=json&sort_order=desc&limit=1"
+    );
+    const yieldData = await yieldRes.json();
+
+    const gold = parseFloat(goldData.price);
+    const dxy = parseFloat(dxyData.percent_change);
+    const yield10 = parseFloat(yieldData.observations[0].value);
+
+    document.getElementById("gold").innerText = "Gold: $" + gold;
+    document.getElementById("dxy").innerText = "DXY Change: " + dxy + "%";
+    document.getElementById("yield").innerText = "10Y Yield: " + yield10 + "%";
+
+    let bias = "NEUTRAL";
+    let signal = "NO EDGE";
+
+    if (dxy < 0 && yield10 < 4.3) {
+      bias = "BULLISH";
+      signal = "BUY BIAS";
+    }
+
+    if (dxy > 0 && yield10 > 4.3) {
+      bias = "BEARISH";
+      signal = "SELL BIAS";
+    }
+
+    document.getElementById("bias").innerText = "Macro Bias: " + bias;
+    document.getElementById("signal").innerText = "Signal: " + signal;
+
+  } catch (error) {
+    document.getElementById("signal").innerText = "Error fetching data";
+  }
+}
+
+fetchData();
+setInterval(fetchData, 60000);
+</script>
+
+</body>
+</html>
