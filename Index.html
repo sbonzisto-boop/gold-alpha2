@@ -17,9 +17,27 @@ h1 {
 }
 .card {
   background: #1e293b;
-  padding: 15px;
+  padding: 20px;
   border-radius: 12px;
   margin-top: 20px;
+}
+select, button {
+  padding: 8px;
+  margin-top: 5px;
+  font-size: 16px;
+}
+button {
+  background: gold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+button:hover {
+  opacity: 0.8;
+}
+#signal {
+  font-size: 24px;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -56,6 +74,49 @@ h1 {
     </script>
   </div>
 </div>
+
+<div class="card">
+  <h2>Macro Signal Engine</h2>
+
+  <label>DXY Direction:</label><br>
+  <select id="dxy">
+    <option value="down">Falling</option>
+    <option value="up">Rising</option>
+  </select>
+
+  <br><br>
+
+  <label>10Y Yield Direction:</label><br>
+  <select id="yield">
+    <option value="down">Falling</option>
+    <option value="up">Rising</option>
+  </select>
+
+  <br><br>
+
+  <button onclick="calculateSignal()">Update Signal</button>
+
+  <h2 id="signal" style="margin-top:20px;">Signal: NEUTRAL ⚖️</h2>
+</div>
+
+<script>
+function calculateSignal() {
+  const dxy = document.getElementById("dxy").value;
+  const yieldDir = document.getElementById("yield").value;
+  const signalBox = document.getElementById("signal");
+
+  if (dxy === "down" && yieldDir === "down") {
+    signalBox.innerHTML = "Signal: BUY BIAS ✅";
+    signalBox.style.color = "lightgreen";
+  } else if (dxy === "up" && yieldDir === "up") {
+    signalBox.innerHTML = "Signal: SELL BIAS ❌";
+    signalBox.style.color = "red";
+  } else {
+    signalBox.innerHTML = "Signal: NEUTRAL ⚖️";
+    signalBox.style.color = "white";
+  }
+}
+</script>
 
 </body>
 </html>
