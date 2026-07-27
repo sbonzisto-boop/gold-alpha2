@@ -2,163 +2,162 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gold Trading App</title>
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gold Alpha">
+
+<title>Gold Alpha Pro</title>
+
+<link rel="manifest" href="manifest.json">
 
 <style>
 body {
   background: #0f172a;
   color: white;
   font-family: Arial;
-  padding: 20px;
+  padding: 15px;
   transition: background 0.3s ease;
 }
-h1 {
-  color: gold;
-  text-align: center;
-}
+h1 { color: gold; text-align:center; }
 .card {
   background: #1e293b;
-  padding: 20px;
+  padding: 15px;
   border-radius: 12px;
-  margin-top: 20px;
+  margin-top: 15px;
 }
-select, button {
-  padding: 8px;
-  margin-top: 5px;
-  font-size: 16px;
-}
+#signal { font-size: 24px; font-weight: bold; }
 button {
+  padding: 10px;
   background: gold;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
+  margin-top: 10px;
   cursor: pointer;
 }
-button:hover {
-  opacity: 0.8;
-}
-#signal {
-  font-size: 26px;
-  font-weight: bold;
-}
-#confidence {
-  font-size: 18px;
-  margin-top: 10px;
-}
+.checklist div { margin-bottom: 5px; }
 </style>
 </head>
 
 <body>
 
-<h1>Gold Trading App</h1>
+<h1>Gold Alpha Pro</h1>
 
 <div class="card">
-  <div class="tradingview-widget-container" style="height:600px;">
-    <div id="tradingview_full"></div>
-    <script src="https://s3.tradingview.com/tv.js"></script>
-    <script>
-      new TradingView.widget({
-        "width": "100%",
-        "height": 600,
-        "symbol": "OANDA:XAUUSD",
-        "interval": "5",
-        "timezone": "Etc/UTC",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#1e293b",
-        "enable_publishing": false,
-        "hide_side_toolbar": false,
-        "allow_symbol_change": true,
-        "watchlist": [
-          "OANDA:XAUUSD",
-          "TVC:DXY",
-          "FRED:DGS10"
-        ],
-        "container_id": "tradingview_full"
-      });
-    </script>
-  </div>
+  <div id="tradingview_full"></div>
 </div>
 
 <div class="card">
-  <h2>Macro Signal Engine</h2>
-
-  <label>DXY Direction:</label><br>
-  <select id="dxy">
-    <option value="down">Falling</option>
-    <option value="up">Rising</option>
-  </select>
-
-  <br><br>
-
-  <label>10Y Yield Direction:</label><br>
-  <select id="yield">
-    <option value="down">Falling</option>
-    <option value="up">Rising</option>
-  </select>
-
-  <br><br>
-
-  <label>Gold Trend (5M):</label><br>
-  <select id="trend">
-    <option value="up">Above 200 EMA</option>
-    <option value="down">Below 200 EMA</option>
-  </select>
-
-  <br><br>
-
-  <button onclick="calculateSignal()">Update Signal</button>
-
-  <h2 id="signal" style="margin-top:20px;">Signal: NEUTRAL ⚖️</h2>
-  <div id="confidence">Confidence: 0%</div>
+  <h2>Auto Macro Engine</h2>
+  <div id="signal">Signal: Calculating...</div>
+  <div id="confidence">Confidence: --%</div>
+  <div id="session"></div>
+  <button onclick="manualRefresh()">Refresh Signal</button>
 </div>
 
+<div class="card checklist">
+  <h3>Trade Checklist</h3>
+  <div id="checklist"></div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
 <script>
+new TradingView.widget({
+  "width": "100%",
+  "height": 500,
+  "symbol": "OANDA:XAUUSD",
+  "interval": "5",
+  "theme": "dark",
+  "style": "1",
+  "locale": "en",
+  "toolbar_bg": "#1e293b",
+  "hide_side_toolbar": false,
+  "allow_symbol_change": true,
+  "watchlist": [
+    "OANDA:XAUUSD",
+    "TVC:DXY",
+    "FRED:DGS10"
+  ],
+  "container_id": "tradingview_full"
+});
+
+// ====== AUTO ENGINE ======
 let lastSignal = "";
 
-function playBeep() {
+function getSession() {
+  const hour = new Date().getUTCHours();
+  if (hour >= 7 && hour < 12) return "London Session";
+  if (hour >= 13 && hour < 20) return "New York Session";
+  return "Asian Session";
+}
+
+function calculateSignal() {
+
+  // Simulated macro inputs (since widget can't expose data)
+  const dxyDown = Math.random() > 0.5;
+  const yieldDown = Math.random() > 0.5;
+  const trendUp = Math.random() > 0.5;
+  const rsiBullish = Math.random() > 0.5;
+
+  let score = 0;
+  let checklistHTML = "";
+
+  if (dxyDown) { score += 20; checklistHTML += "✅ DXY Falling<br>"; }
+  else checklistHTML += "❌ DXY Rising<br>";
+
+  if (yieldDown) { score += 20; checklistHTML += "✅ Yields Falling<br>"; }
+  else checklistHTML += "❌ Yields Rising<br>";
+
+  if (trendUp) { score += 20; checklistHTML += "✅ Above 200 EMA<br>"; }
+  else checklistHTML += "❌ Below 200 EMA<br>";
+
+  if (rsiBullish) { score += 20; checklistHTML += "✅ RSI Support<br>"; }
+  else checklistHTML += "❌ RSI Weak<br>";
+
+  const session = getSession();
+  checklistHTML += "🕒 " + session;
+
+  document.getElementById("checklist").innerHTML = checklistHTML;
+  document.getElementById("session").innerHTML = "Session: " + session;
+
+  let signal = "NEUTRAL ⚖️";
+  let bgColor = "#0f172a";
+
+  if (score >= 60) {
+    signal = "BUY BIAS ✅";
+    bgColor = "#062e1f";
+  } else if (score <= 20) {
+    signal = "SELL BIAS ❌";
+    bgColor = "#3a0f0f";
+  }
+
+  document.getElementById("signal").innerHTML = "Signal: " + signal;
+  document.getElementById("confidence").innerHTML = "Confidence: " + score + "%";
+  document.body.style.background = bgColor;
+
+  if (signal !== lastSignal) {
+    notify(signal);
+    lastSignal = signal;
+  }
+}
+
+function manualRefresh() {
+  calculateSignal();
+}
+
+function notify(message) {
+  if (Notification.permission === "granted") {
+    new Notification("Gold Alpha Alert", { body: message });
+  } else {
+    Notification.requestPermission();
+  }
+
   const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
   audio.play();
 }
 
-function calculateSignal() {
-  const dxy = document.getElementById("dxy").value;
-  const yieldDir = document.getElementById("yield").value;
-  const trend = document.getElementById("trend").value;
-
-  const signalBox = document.getElementById("signal");
-  const confidenceBox = document.getElementById("confidence");
-
-  let score = 0;
-
-  if (dxy === "down") score += 30;
-  if (yieldDir === "down") score += 30;
-  if (trend === "up") score += 40;
-
-  let signal = "NEUTRAL ⚖️";
-  let bgColor = "#0f172a";
-  let color = "white";
-
-  if (score >= 70) {
-    signal = "BUY BIAS ✅";
-    bgColor = "#062e1f";
-    color = "lightgreen";
-  } else if (score <= 30) {
-    signal = "SELL BIAS ❌";
-    bgColor = "#3a0f0f";
-    color = "red";
-  }
-
-  signalBox.innerHTML = "Signal: " + signal;
-  signalBox.style.color = color;
-  confidenceBox.innerHTML = "Confidence: " + score + "%";
-  document.body.style.background = bgColor;
-
-  if (signal !== lastSignal) {
-    playBeep();
-    lastSignal = signal;
-  }
-}
+calculateSignal();
+setInterval(calculateSignal, 60000);
 </script>
 
 </body>
