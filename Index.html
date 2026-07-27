@@ -1,82 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gold Trading App</title>
-  <style>
-    body {
-      background: #0f172a;
-      color: white;
-      font-family: Arial;
-      text-align: center;
-      padding: 20px;
-    }
-    h1 {
-      color: gold;
-    }
-    .card {
-      background: #1e293b;
-      padding: 15px;
-      border-radius: 12px;
-      margin-top: 20px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-    }
-  </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Trading App</title>
+
+<style>
+body {
+  background: #0f172a;
+  color: white;
+  font-family: Arial;
+  padding: 20px;
+}
+h1 {
+  color: gold;
+  text-align: center;
+}
+.card {
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+</style>
 </head>
+
 <body>
 
 <h1>Gold Trading App</h1>
 
-<!-- GOLD CHART -->
 <div class="card">
-  <h2>Gold (5M)</h2>
-  <div id="gold_chart"></div>
-</div>
-
-<!-- MACRO PANEL -->
-<div class="card">
-  <h2>Macro Dashboard</h2>
-  <div class="grid">
-    <div id="dxy_chart"></div>
-    <div id="yield_chart"></div>
+  <div class="tradingview-widget-container" style="height:600px;">
+    <div id="tradingview_full"></div>
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+      new TradingView.widget({
+        "width": "100%",
+        "height": 600,
+        "symbol": "OANDA:XAUUSD",
+        "interval": "5",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#1e293b",
+        "enable_publishing": false,
+        "hide_side_toolbar": false,
+        "allow_symbol_change": true,
+        "watchlist": [
+          "OANDA:XAUUSD",
+          "TVC:DXY",
+          "FRED:DGS10"
+        ],
+        "container_id": "tradingview_full"
+      });
+    </script>
   </div>
 </div>
-
-<script src="https://s3.tradingview.com/tv.js"></script>
-<script>
-
-new TradingView.widget({
-  "width": "100%",
-  "height": 400,
-  "symbol": "OANDA:XAUUSD",
-  "interval": "5",
-  "theme": "dark",
-  "container_id": "gold_chart"
-});
-
-new TradingView.widget({
-  "width": "100%",
-  "height": 250,
-  "symbol": "TVC:DXY",
-  "interval": "60",
-  "theme": "dark",
-  "container_id": "dxy_chart"
-});
-
-new TradingView.widget({
-  "width": "100%",
-  "height": 250,
-  "symbol": "TVC:US10Y",
-  "interval": "60",
-  "theme": "dark",
-  "container_id": "yield_chart"
-});
-
-</script>
 
 </body>
 </html>
