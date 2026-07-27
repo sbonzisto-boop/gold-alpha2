@@ -10,6 +10,7 @@ body {
   color: white;
   font-family: Arial;
   padding: 20px;
+  transition: background 0.3s ease;
 }
 h1 {
   color: gold;
@@ -36,8 +37,12 @@ button:hover {
   opacity: 0.8;
 }
 #signal {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: bold;
+}
+#confidence {
+  font-size: 18px;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -94,26 +99,64 @@ button:hover {
 
   <br><br>
 
+  <label>Gold Trend (5M):</label><br>
+  <select id="trend">
+    <option value="up">Above 200 EMA</option>
+    <option value="down">Below 200 EMA</option>
+  </select>
+
+  <br><br>
+
   <button onclick="calculateSignal()">Update Signal</button>
 
   <h2 id="signal" style="margin-top:20px;">Signal: NEUTRAL ⚖️</h2>
+  <div id="confidence">Confidence: 0%</div>
 </div>
 
 <script>
+let lastSignal = "";
+
+function playBeep() {
+  const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+  audio.play();
+}
+
 function calculateSignal() {
   const dxy = document.getElementById("dxy").value;
   const yieldDir = document.getElementById("yield").value;
-  const signalBox = document.getElementById("signal");
+  const trend = document.getElementById("trend").value;
 
-  if (dxy === "down" && yieldDir === "down") {
-    signalBox.innerHTML = "Signal: BUY BIAS ✅";
-    signalBox.style.color = "lightgreen";
-  } else if (dxy === "up" && yieldDir === "up") {
-    signalBox.innerHTML = "Signal: SELL BIAS ❌";
-    signalBox.style.color = "red";
-  } else {
-    signalBox.innerHTML = "Signal: NEUTRAL ⚖️";
-    signalBox.style.color = "white";
+  const signalBox = document.getElementById("signal");
+  const confidenceBox = document.getElementById("confidence");
+
+  let score = 0;
+
+  if (dxy === "down") score += 30;
+  if (yieldDir === "down") score += 30;
+  if (trend === "up") score += 40;
+
+  let signal = "NEUTRAL ⚖️";
+  let bgColor = "#0f172a";
+  let color = "white";
+
+  if (score >= 70) {
+    signal = "BUY BIAS ✅";
+    bgColor = "#062e1f";
+    color = "lightgreen";
+  } else if (score <= 30) {
+    signal = "SELL BIAS ❌";
+    bgColor = "#3a0f0f";
+    color = "red";
+  }
+
+  signalBox.innerHTML = "Signal: " + signal;
+  signalBox.style.color = color;
+  confidenceBox.innerHTML = "Confidence: " + score + "%";
+  document.body.style.background = bgColor;
+
+  if (signal !== lastSignal) {
+    playBeep();
+    lastSignal = signal;
   }
 }
 </script>
