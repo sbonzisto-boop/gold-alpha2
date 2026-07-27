@@ -5,159 +5,151 @@
 <meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gold Alpha">
+<meta name="apple-mobile-web-app-title" content="Gold Edge">
 
-<title>Gold Alpha Pro</title>
-
-<link rel="manifest" href="manifest.json">
+<title>Gold Edge Terminal</title>
 
 <style>
 body {
-  background: #0f172a;
-  color: white;
-  font-family: Arial;
-  padding: 15px;
-  transition: background 0.3s ease;
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  padding:15px;
 }
-h1 { color: gold; text-align:center; }
+h1 { color:gold; text-align:center; }
 .card {
-  background: #1e293b;
-  padding: 15px;
-  border-radius: 12px;
-  margin-top: 15px;
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+  margin-top:15px;
 }
-#signal { font-size: 24px; font-weight: bold; }
+input, select, button {
+  width:100%;
+  padding:8px;
+  margin-top:8px;
+  border-radius:6px;
+  border:none;
+}
 button {
-  padding: 10px;
-  background: gold;
-  border: none;
-  border-radius: 8px;
-  margin-top: 10px;
-  cursor: pointer;
+  background:gold;
+  font-weight:bold;
+  cursor:pointer;
 }
-.checklist div { margin-bottom: 5px; }
+#result {
+  margin-top:15px;
+  font-size:16px;
+}
 </style>
 </head>
 
 <body>
 
-<h1>Gold Alpha Pro</h1>
+<h1>Gold Edge Terminal</h1>
 
 <div class="card">
-  <div id="tradingview_full"></div>
+  <div id="tv_chart"></div>
 </div>
 
 <div class="card">
-  <h2>Auto Macro Engine</h2>
-  <div id="signal">Signal: Calculating...</div>
-  <div id="confidence">Confidence: --%</div>
-  <div id="session"></div>
-  <button onclick="manualRefresh()">Refresh Signal</button>
-</div>
+  <h3>Trade Setup Confirmation</h3>
 
-<div class="card checklist">
-  <h3>Trade Checklist</h3>
-  <div id="checklist"></div>
+  <label>Current Gold Price</label>
+  <input type="number" id="price" placeholder="e.g. 2400">
+
+  <label>Account Size ($)</label>
+  <input type="number" id="account" placeholder="e.g. 10000">
+
+  <label>Risk % Per Trade</label>
+  <input type="number" id="risk" placeholder="e.g. 1">
+
+  <label>Trend</label>
+  <select id="trend">
+    <option value="buy">Above 200 EMA (Bullish)</option>
+    <option value="sell">Below 200 EMA (Bearish)</option>
+  </select>
+
+  <label>DXY Direction</label>
+  <select id="dxy">
+    <option value="down">Falling</option>
+    <option value="up">Rising</option>
+  </select>
+
+  <button onclick="generateTrade()">Generate Entry Plan</button>
+
+  <div id="result"></div>
 </div>
 
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
 new TradingView.widget({
-  "width": "100%",
-  "height": 500,
-  "symbol": "OANDA:XAUUSD",
-  "interval": "5",
-  "theme": "dark",
-  "style": "1",
-  "locale": "en",
-  "toolbar_bg": "#1e293b",
-  "hide_side_toolbar": false,
-  "allow_symbol_change": true,
-  "watchlist": [
+  "width":"100%",
+  "height":500,
+  "symbol":"OANDA:XAUUSD",
+  "interval":"5",
+  "theme":"dark",
+  "style":"1",
+  "locale":"en",
+  "toolbar_bg":"#1e293b",
+  "allow_symbol_change":true,
+  "watchlist":[
     "OANDA:XAUUSD",
     "TVC:DXY",
     "FRED:DGS10"
   ],
-  "container_id": "tradingview_full"
+  "container_id":"tv_chart"
 });
 
-// ====== AUTO ENGINE ======
-let lastSignal = "";
+function generateTrade(){
 
-function getSession() {
-  const hour = new Date().getUTCHours();
-  if (hour >= 7 && hour < 12) return "London Session";
-  if (hour >= 13 && hour < 20) return "New York Session";
-  return "Asian Session";
-}
+  const price = parseFloat(document.getElementById("price").value);
+  const account = parseFloat(document.getElementById("account").value);
+  const riskPercent = parseFloat(document.getElementById("risk").value);
+  const trend = document.getElementById("trend").value;
+  const dxy = document.getElementById("dxy").value;
 
-function calculateSignal() {
-
-  // Simulated macro inputs (since widget can't expose data)
-  const dxyDown = Math.random() > 0.5;
-  const yieldDown = Math.random() > 0.5;
-  const trendUp = Math.random() > 0.5;
-  const rsiBullish = Math.random() > 0.5;
-
-  let score = 0;
-  let checklistHTML = "";
-
-  if (dxyDown) { score += 20; checklistHTML += "✅ DXY Falling<br>"; }
-  else checklistHTML += "❌ DXY Rising<br>";
-
-  if (yieldDown) { score += 20; checklistHTML += "✅ Yields Falling<br>"; }
-  else checklistHTML += "❌ Yields Rising<br>";
-
-  if (trendUp) { score += 20; checklistHTML += "✅ Above 200 EMA<br>"; }
-  else checklistHTML += "❌ Below 200 EMA<br>";
-
-  if (rsiBullish) { score += 20; checklistHTML += "✅ RSI Support<br>"; }
-  else checklistHTML += "❌ RSI Weak<br>";
-
-  const session = getSession();
-  checklistHTML += "🕒 " + session;
-
-  document.getElementById("checklist").innerHTML = checklistHTML;
-  document.getElementById("session").innerHTML = "Session: " + session;
-
-  let signal = "NEUTRAL ⚖️";
-  let bgColor = "#0f172a";
-
-  if (score >= 60) {
-    signal = "BUY BIAS ✅";
-    bgColor = "#062e1f";
-  } else if (score <= 20) {
-    signal = "SELL BIAS ❌";
-    bgColor = "#3a0f0f";
+  if(!price || !account || !riskPercent){
+    alert("Fill all fields");
+    return;
   }
 
-  document.getElementById("signal").innerHTML = "Signal: " + signal;
-  document.getElementById("confidence").innerHTML = "Confidence: " + score + "%";
-  document.body.style.background = bgColor;
-
-  if (signal !== lastSignal) {
-    notify(signal);
-    lastSignal = signal;
-  }
-}
-
-function manualRefresh() {
-  calculateSignal();
-}
-
-function notify(message) {
-  if (Notification.permission === "granted") {
-    new Notification("Gold Alpha Alert", { body: message });
+  let direction = "";
+  if(trend === "buy" && dxy === "down"){
+    direction = "BUY";
+  } else if(trend === "sell" && dxy === "up"){
+    direction = "SELL";
   } else {
-    Notification.requestPermission();
+    document.getElementById("result").innerHTML =
+      "<b>No valid setup. Conditions not aligned.</b>";
+    return;
   }
+
+  const riskAmount = account * (riskPercent/100);
+  const stopDistance = price * 0.005; // 0.5% SL
+  let stopLoss, tp1, tp2;
+
+  if(direction === "BUY"){
+    stopLoss = price - stopDistance;
+    tp1 = price + stopDistance;
+    tp2 = price + (stopDistance*2);
+  } else {
+    stopLoss = price + stopDistance;
+    tp1 = price - stopDistance;
+    tp2 = price - (stopDistance*2);
+  }
+
+  const positionSize = (riskAmount / stopDistance).toFixed(2);
+
+  document.getElementById("result").innerHTML =
+    "<b>Signal:</b> " + direction + "<br>" +
+    "Entry: " + price.toFixed(2) + "<br>" +
+    "Stop Loss: " + stopLoss.toFixed(2) + "<br>" +
+    "TP1: " + tp1.toFixed(2) + "<br>" +
+    "TP2: " + tp2.toFixed(2) + "<br>" +
+    "Position Size (oz): " + positionSize;
 
   const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
   audio.play();
 }
-
-calculateSignal();
-setInterval(calculateSignal, 60000);
 </script>
 
 </body>
