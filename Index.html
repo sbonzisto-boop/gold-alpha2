@@ -5,9 +5,8 @@
 <meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gold Edge">
 
-<title>Gold Edge Terminal</title>
+<title>Gold Macro Edge</title>
 
 <style>
 body {
@@ -17,41 +16,67 @@ body {
   padding:15px;
 }
 h1 { color:gold; text-align:center; }
+
 .card {
   background:#1e293b;
   padding:15px;
   border-radius:12px;
   margin-top:15px;
 }
-input, select, button {
+
+button {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  background:gold;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+input {
   width:100%;
   padding:8px;
   margin-top:8px;
   border-radius:6px;
   border:none;
 }
-button {
-  background:gold;
-  font-weight:bold;
-  cursor:pointer;
-}
-#result {
-  margin-top:15px;
-  font-size:16px;
+
+#biasResult {
+  font-size:18px;
+  margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Gold Edge Terminal</h1>
+<h1>Gold Macro Edge</h1>
 
+<!-- GOLD CHART -->
 <div class="card">
-  <div id="tv_chart"></div>
+  <div id="gold_chart"></div>
 </div>
 
+<!-- DXY AUTO TECHNICALS -->
 <div class="card">
-  <h3>Trade Setup Confirmation</h3>
+  <h3>DXY Automatic Bias (TradingView Engine)</h3>
+
+  <div class="tradingview-widget-container">
+    <div id="dxy_1h"></div>
+  </div>
+
+  <div class="tradingview-widget-container" style="margin-top:10px;">
+    <div id="dxy_4h"></div>
+  </div>
+
+  <div id="biasResult"></div>
+</div>
+
+<!-- TRADE PLANNER -->
+<div class="card">
+  <h3>Gold Trade Planner</h3>
 
   <label>Current Gold Price</label>
   <input type="number" id="price" placeholder="e.g. 2400">
@@ -59,96 +84,97 @@ button {
   <label>Account Size ($)</label>
   <input type="number" id="account" placeholder="e.g. 10000">
 
-  <label>Risk % Per Trade</label>
+  <label>Risk %</label>
   <input type="number" id="risk" placeholder="e.g. 1">
 
-  <label>Trend</label>
-  <select id="trend">
-    <option value="buy">Above 200 EMA (Bullish)</option>
-    <option value="sell">Below 200 EMA (Bearish)</option>
-  </select>
+  <button onclick="generateTrade()">Generate Trade Plan</button>
 
-  <label>DXY Direction</label>
-  <select id="dxy">
-    <option value="down">Falling</option>
-    <option value="up">Rising</option>
-  </select>
-
-  <button onclick="generateTrade()">Generate Entry Plan</button>
-
-  <div id="result"></div>
+  <div id="tradeOutput"></div>
 </div>
 
 <script src="https://s3.tradingview.com/tv.js"></script>
+
 <script>
+// GOLD CHART
 new TradingView.widget({
   "width":"100%",
-  "height":500,
+  "height":450,
   "symbol":"OANDA:XAUUSD",
   "interval":"5",
   "theme":"dark",
   "style":"1",
   "locale":"en",
-  "toolbar_bg":"#1e293b",
   "allow_symbol_change":true,
-  "watchlist":[
-    "OANDA:XAUUSD",
-    "TVC:DXY",
-    "FRED:DGS10"
-  ],
-  "container_id":"tv_chart"
+  "container_id":"gold_chart"
 });
 
+// DXY 1H TECHNICAL SUMMARY
+new TradingView.widget({
+  "container_id":"dxy_1h",
+  "width":"100%",
+  "height":220,
+  "symbol":"TVC:DXY",
+  "interval":"60",
+  "showIntervalTabs":false,
+  "displayMode":"regular",
+  "locale":"en",
+  "colorTheme":"dark"
+});
+
+// DXY 4H TECHNICAL SUMMARY
+new TradingView.widget({
+  "container_id":"dxy_4h",
+  "width":"100%",
+  "height":220,
+  "symbol":"TVC:DXY",
+  "interval":"240",
+  "showIntervalTabs":false,
+  "displayMode":"regular",
+  "locale":"en",
+  "colorTheme":"dark"
+});
+
+// ===== Bias Estimation Logic =====
+// We cannot read widget values directly.
+// So we instruct user visually and provide structured bias guidance.
+
+document.getElementById("biasResult").innerHTML =
+  "<b>How to Read Bias:</b><br>" +
+  "If BOTH 1H and 4H show <b>Strong Sell</b> → Dollar Bearish → Gold Bullish Bias<br>" +
+  "If BOTH show <b>Strong Buy</b> → Dollar Bullish → Gold Bearish Bias<br>" +
+  "If mixed → Likely short-term volatility / transition phase<br><br>" +
+  "Persistence Guide:<br>" +
+  "• 4H alignment suggests multi-session continuation (4–12 hours)<br>" +
+  "• Only 1H alignment suggests intraday move (1–3 hours)";
+
+// ===== Trade Planner =====
 function generateTrade(){
 
   const price = parseFloat(document.getElementById("price").value);
   const account = parseFloat(document.getElementById("account").value);
   const riskPercent = parseFloat(document.getElementById("risk").value);
-  const trend = document.getElementById("trend").value;
-  const dxy = document.getElementById("dxy").value;
 
   if(!price || !account || !riskPercent){
     alert("Fill all fields");
     return;
   }
 
-  let direction = "";
-  if(trend === "buy" && dxy === "down"){
-    direction = "BUY";
-  } else if(trend === "sell" && dxy === "up"){
-    direction = "SELL";
-  } else {
-    document.getElementById("result").innerHTML =
-      "<b>No valid setup. Conditions not aligned.</b>";
-    return;
-  }
-
   const riskAmount = account * (riskPercent/100);
-  const stopDistance = price * 0.005; // 0.5% SL
-  let stopLoss, tp1, tp2;
+  const stopDistance = price * 0.005;
 
-  if(direction === "BUY"){
-    stopLoss = price - stopDistance;
-    tp1 = price + stopDistance;
-    tp2 = price + (stopDistance*2);
-  } else {
-    stopLoss = price + stopDistance;
-    tp1 = price - stopDistance;
-    tp2 = price - (stopDistance*2);
-  }
+  const stopLoss = price - stopDistance;
+  const tp1 = price + stopDistance;
+  const tp2 = price + (stopDistance*2);
 
   const positionSize = (riskAmount / stopDistance).toFixed(2);
 
-  document.getElementById("result").innerHTML =
-    "<b>Signal:</b> " + direction + "<br>" +
+  document.getElementById("tradeOutput").innerHTML =
+    "<b>Execution Model:</b><br>" +
     "Entry: " + price.toFixed(2) + "<br>" +
-    "Stop Loss: " + stopLoss.toFixed(2) + "<br>" +
+    "Stop: " + stopLoss.toFixed(2) + "<br>" +
     "TP1: " + tp1.toFixed(2) + "<br>" +
     "TP2: " + tp2.toFixed(2) + "<br>" +
-    "Position Size (oz): " + positionSize;
-
-  const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-  audio.play();
+    "Position Size: " + positionSize + " oz";
 }
 </script>
 
